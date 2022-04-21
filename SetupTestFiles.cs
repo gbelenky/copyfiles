@@ -43,6 +43,7 @@ namespace gbelenky.Storage
             try
             {
                 // Create a BlobClient representing the source blob to copy.
+                // get the original name
                 string blobName = newBlobName.Split('_',2)[0];
                 BlobClient sourceBlob = container.GetBlobClient(blobName);
 
