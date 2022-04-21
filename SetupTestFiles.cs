@@ -44,13 +44,13 @@ namespace gbelenky.Storage
         }
 
         [FunctionName("GetFileNameToClone")]
+        [StorageAccount("SRC_BLOB_STORAGE")]
         public static string GetFileNameToClone([ActivityTrigger] string someValue,
         [Blob("srcfiles")] BlobContainerClient blobContainerClient, ILogger log)
 
         {
-            string blobName = blobContainerClient.GetBlobs().FirstOrDefault().Name;
-            string fileName = "myfile.dat";
-            log.LogInformation($"GetFileNameToClone.");
+            string fileName = blobContainerClient.GetBlobs().FirstOrDefault().Name;
+            log.LogInformation($"GetFileNameToClone - {fileName}");
             return $"{fileName}";
         }
 
