@@ -16,7 +16,7 @@ namespace gbelenky.Storage
 {
     public static class SetupTestFiles
     {
-        private static long iterations = 2;
+        private static long iterations = 50000;
 
         [FunctionName("SetupTestFiles")]
         public static async Task RunOrchestrator(
@@ -26,7 +26,8 @@ namespace gbelenky.Storage
             var tasks = new Task[iterations];
             for (int i = 0; i < iterations; i++)
             {
-                tasks[i] = context.CallActivityAsync("CloneFile", $"{fileNameToClone}_{i}");
+                string newFileName = $"{fileNameToClone}_{i}";
+                tasks[i] = context.CallActivityAsync("CloneFile", newFileName);
             }
             await Task.WhenAll(tasks);
 
@@ -35,32 +36,22 @@ namespace gbelenky.Storage
 
         [FunctionName("CloneFile")]
         [StorageAccount("SRC_BLOB_STORAGE")]
-        public static void CloneFile([ActivityTrigger] string blobName,
+        public static void CloneFile([ActivityTrigger] string newBlobName, 
         [Blob("srcfiles")] BlobContainerClient container, ILogger log)
         {
             // used async sample here - https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-copy?tabs=dotnet#copy-a-blob
             try
             {
                 // Create a BlobClient representing the source blob to copy.
+                string blobName = newBlobName.Split('_',2)[0];
                 BlobClient sourceBlob = container.GetBlobClient(blobName);
 
                 // Ensure that the source blob exists.
                 if (sourceBlob.Exists())
                 {
-                    // Lease the source blob for the copy operation 
-                    // to prevent another client from modifying it.
-                    BlobLeaseClient lease = sourceBlob.GetBlobLeaseClient();
-
-                    // Specifying -1 for the lease interval creates an infinite lease.
-                    lease.Acquire(TimeSpan.FromSeconds(-1));
-
-                    // Get the source blob's properties and display the lease state.
-                    BlobProperties sourceProperties = sourceBlob.GetProperties();
-                    Console.WriteLine($"Lease state: {sourceProperties.LeaseState}");
-
                     // Get a BlobClient representing the destination blob with a unique name.
                     BlobClient destBlob =
-                        container.GetBlobClient(Guid.NewGuid() + "-" + sourceBlob.Name);
+                        container.GetBlobClient(newBlobName);
 
                     // Start the copy operation.
                     destBlob.StartCopyFromUri(sourceBlob.Uri);
@@ -72,19 +63,6 @@ namespace gbelenky.Storage
                     log.LogInformation($"Copy progress: {destProperties.CopyProgress}");
                     log.LogInformation($"Completion time: {destProperties.CopyCompletedOn}");
                     log.LogInformation($"Total bytes: {destProperties.ContentLength}");
-
-                    // Update the source blob's properties.
-                    sourceProperties = sourceBlob.GetProperties();
-
-                    if (sourceProperties.LeaseState == LeaseState.Leased)
-                    {
-                        // Break the lease on the source blob.
-                        lease.Break();
-
-                        // Update the source blob's properties to check the lease state.
-                        sourceProperties = sourceBlob.GetProperties();
-                        log.LogInformation($"Lease state: {sourceProperties.LeaseState}");
-                    }
                 }
             }
             catch (RequestFailedException ex)
@@ -92,7 +70,7 @@ namespace gbelenky.Storage
                 log.LogInformation(ex.Message);
                 throw;
             }
-            log.LogInformation($"Blob {blobName} was created.");
+            log.LogInformation($"Blob {newBlobName} was created.");
             return;
         }
 
