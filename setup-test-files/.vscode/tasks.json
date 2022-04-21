@@ -10,10 +10,7 @@
 				"/consoleloggerparameters:NoSummary"
 			],
 			"type": "process",
-			"problemMatcher": "$msCompile",
-			"options": {
-				"cwd": "${workspaceFolder}/setup-test-files"
-			}
+			"problemMatcher": "$msCompile"
 		},
 		{
 			"label": "build (functions)",
@@ -29,10 +26,7 @@
 				"kind": "build",
 				"isDefault": true
 			},
-			"problemMatcher": "$msCompile",
-			"options": {
-				"cwd": "${workspaceFolder}/setup-test-files"
-			}
+			"problemMatcher": "$msCompile"
 		},
 		{
 			"label": "clean release (functions)",
@@ -45,10 +39,7 @@
 				"/consoleloggerparameters:NoSummary"
 			],
 			"type": "process",
-			"problemMatcher": "$msCompile",
-			"options": {
-				"cwd": "${workspaceFolder}/setup-test-files"
-			}
+			"problemMatcher": "$msCompile"
 		},
 		{
 			"label": "publish (functions)",
@@ -62,16 +53,13 @@
 			],
 			"type": "process",
 			"dependsOn": "clean release (functions)",
-			"problemMatcher": "$msCompile",
-			"options": {
-				"cwd": "${workspaceFolder}/setup-test-files"
-			}
+			"problemMatcher": "$msCompile"
 		},
 		{
 			"type": "func",
 			"dependsOn": "build (functions)",
 			"options": {
-				"cwd": "${workspaceFolder}/setup-test-files/bin/Debug/net6.0"
+				"cwd": "${workspaceFolder}/bin/Debug/net6.0"
 			},
 			"command": "host start",
 			"isBackground": true,
