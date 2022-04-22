@@ -1,4 +1,4 @@
-# Copy big number of large files from one storage account blob container into another storage account blob container
+# Copy many large files from one storage account blob container into another storage account blob container
 
 Prerequisites to run it locally:
 Two Azure storage accounts - one for the source blob container and another for the desination blob container
