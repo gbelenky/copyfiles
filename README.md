@@ -35,6 +35,7 @@ here you will need the following config params in the local.setting.json:
 to run the copy files after that you will need to add follwing config params into your local.settings.json file :
 
 "AzureWebJobsSRC_BLOB_STORAGE" : "YOURCONNECTIONSTRING"
+
 "AzureWebJobsDST_BLOB_STORAGE" : "YOURCONNECTIONSTRING"
 
 
