@@ -1,4 +1,4 @@
-# Copy big number of large files from one storage account blob container into another storage account blob container
+# Copy many large files from one storage account blob container into another storage account blob container
 
 Prerequisites to run it locally:
 Two Azure storage accounts - one for the source blob container and another for the desination blob container
@@ -35,6 +35,7 @@ here you will need the following config params in the local.setting.json:
 to run the copy files after that you will need to add follwing config params into your local.settings.json file :
 
 "AzureWebJobsSRC_BLOB_STORAGE" : "YOURCONNECTIONSTRING"
+
 "AzureWebJobsDST_BLOB_STORAGE" : "YOURCONNECTIONSTRING"
 
 
