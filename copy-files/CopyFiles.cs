@@ -30,10 +30,6 @@ namespace gbelenky.Storage
             foreach (string blobName in blobs)
             {
                 tasks[i] = context.CallActivityAsync("CopyFile", blobName);
-                // copy between storage accounts is the async service side task
-                // if you want to delete the src file after it was processed, you will probably need another function
-                // listening to the destination blob storage for new files and once a new file arrived, you will need 
-                // to delete it at the source storage account
                 i++;
             }
 
@@ -43,7 +39,7 @@ namespace gbelenky.Storage
 
         [FunctionName("CopyFile")]
         [StorageAccount("SRC_BLOB_STORAGE")]
-        public static void CopyFile([ActivityTrigger] string blobName,
+        public static async Task CopyFile([ActivityTrigger] string blobName,
         [Blob("srcfiles", Connection = "SRC_BLOB_STORAGE")] BlobContainerClient srcContainer,
         [Blob("destfiles", Connection = "DST_BLOB_STORAGE")] BlobContainerClient destContainer,
         ILogger log)
@@ -55,21 +51,31 @@ namespace gbelenky.Storage
                 // get the original name
                 BlobClient sourceBlob = srcContainer.GetBlobClient(blobName);
                 // Ensure that the source blob exists.
-                if (sourceBlob.Exists())
+                if (await sourceBlob.ExistsAsync())
                 {
+                    // Check the source file's metadata
+                    Response<BlobProperties> propertiesResponse = await sourceBlob.GetPropertiesAsync();
+                    BlobProperties properties = propertiesResponse.Value;
+
                     Uri srcBlobUri = GetServiceSasUriForBlob(sourceBlob, log);
 
                     BlobClient destBlob = destContainer.GetBlobClient(blobName);
 
                     // Start the copy operation.
-                    destBlob.StartCopyFromUri(srcBlobUri);
+                    var ops = await destBlob.StartCopyFromUriAsync(srcBlobUri);
                     // Get the destination blob's properties and display the copy status.
-                    BlobProperties destProperties = destBlob.GetProperties();
+                    while (ops.HasCompleted == false)
+                    {
+                        long copied = await ops.WaitForCompletionAsync();
 
-                    log.LogInformation($"Copy status: {destProperties.CopyStatus}");
-                    log.LogInformation($"Copy progress: {destProperties.CopyProgress}");
-                    log.LogInformation($"Completion time: {destProperties.CopyCompletedOn}");
-                    log.LogInformation($"Total bytes: {destProperties.ContentLength}");
+                        log.LogInformation($"Blob: {destBlob.Name}, Copied: {copied} of {properties.ContentLength}");
+                        await Task.Delay(500);
+                    }
+
+                    log.LogInformation($"Blob: {destBlob.Name} Complete");
+
+                    // Remove the source blob
+                    bool blobExisted = await sourceBlob.DeleteIfExistsAsync();
                 }
             }
             catch (RequestFailedException ex)
@@ -81,7 +87,7 @@ namespace gbelenky.Storage
             return;
         }
 
-        private static Uri GetServiceSasUriForBlob(BlobClient blobClient, ILogger log, 
+        private static Uri GetServiceSasUriForBlob(BlobClient blobClient, ILogger log,
             string storedPolicyName = null)
         {
             // Check whether this BlobClient object has been authorized with Shared Key.
