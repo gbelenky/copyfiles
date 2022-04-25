@@ -51,10 +51,10 @@ namespace gbelenky.Storage
                 // get the original name
                 BlobClient sourceBlob = srcContainer.GetBlobClient(blobName);
                 // Ensure that the source blob exists.
-                if (await sourceBlob.ExistsAsync())
+                if (sourceBlob.Exists())
                 {
                     // Check the source file's metadata
-                    Response<BlobProperties> propertiesResponse = await sourceBlob.GetPropertiesAsync();
+                    Response<BlobProperties> propertiesResponse = sourceBlob.GetProperties();
                     BlobProperties properties = propertiesResponse.Value;
 
                     Uri srcBlobUri = GetServiceSasUriForBlob(sourceBlob, log);
@@ -62,7 +62,7 @@ namespace gbelenky.Storage
                     BlobClient destBlob = destContainer.GetBlobClient(blobName);
 
                     // Start the copy operation.
-                    var ops = await destBlob.StartCopyFromUriAsync(srcBlobUri);
+                    var ops = destBlob.StartCopyFromUri(srcBlobUri);
                     // Get the destination blob's properties and display the copy status.
                     while (ops.HasCompleted == false)
                     {
@@ -75,7 +75,7 @@ namespace gbelenky.Storage
                     log.LogInformation($"Blob: {destBlob.Name} Complete");
 
                     // Remove the source blob
-                    bool blobExisted = await sourceBlob.DeleteIfExistsAsync();
+                    bool blobExisted = sourceBlob.DeleteIfExists();
                 }
             }
             catch (RequestFailedException ex)
@@ -103,7 +103,7 @@ namespace gbelenky.Storage
 
                 if (storedPolicyName == null)
                 {
-                    sasBuilder.ExpiresOn = DateTimeOffset.UtcNow.AddSeconds(5);
+                    sasBuilder.ExpiresOn = DateTimeOffset.UtcNow.AddMinutes(5);
                     sasBuilder.SetPermissions(BlobSasPermissions.Read |
                         BlobSasPermissions.Write);
                 }
